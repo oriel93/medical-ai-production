@@ -3,288 +3,250 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Medical AI Assistant</title>
+    <title>AI Medical Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-solid: #667eea;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
         }
-
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f4ff 100%);
             min-height: 100vh;
-            padding: 20px;
+            line-height: 1.6;
         }
-
-        .container {
-            max-width: 800px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 15px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+        
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        
+        .header {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            font-weight: 700;
+            background: var(--primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 16px;
+        }
+        
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
             overflow: hidden;
         }
-
-        .header {
-            background: linear-gradient(45deg, #4CAF50, #45a049);
+        
+        .card-header {
+            background: var(--primary);
             color: white;
-            padding: 30px;
+            padding: 25px;
             text-align: center;
         }
-
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
-        }
-
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
-        .main-content {
-            padding: 40px;
-        }
-
-        .input-section {
-            margin-bottom: 30px;
-        }
-
-        label {
-            display: block;
-            font-size: 1.2em;
-            color: #333;
-            margin-bottom: 10px;
-            font-weight: 600;
-        }
-
-        textarea {
+        
+        .card-body { padding: 30px; }
+        
+        .symptoms-textarea {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #ddd;
-            border-radius: 10px;
+            height: 250px;
+            padding: 20px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
             font-size: 16px;
-            resize: vertical;
-            min-height: 120px;
             font-family: inherit;
+            resize: vertical;
+            margin-bottom: 20px;
         }
-
-        textarea:focus {
-            outline: none;
-            border-color: #4CAF50;
-            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
-        }
-
+        
         .analyze-btn {
-            background: linear-gradient(45deg, #4CAF50, #45a049);
+            width: 100%;
+            background: var(--primary);
             color: white;
-            padding: 15px 40px;
             border: none;
-            border-radius: 10px;
-            font-size: 1.1em;
+            padding: 16px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            border-radius: 16px;
             cursor: pointer;
             transition: all 0.3s ease;
-            font-weight: 600;
         }
-
-        .analyze-btn:hover {
+        
+        .analyze-btn:hover:not(:disabled) {
             transform: translateY(-2px);
-            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
         }
-
-        .analyze-btn:disabled {
-            background: #ccc;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .results {
-            margin-top: 30px;
+        
+        .condition {
+            background: rgba(16, 185, 129, 0.08);
+            border-left: 4px solid var(--accent);
             padding: 20px;
-            background: #f8f9fa;
-            border-radius: 10px;
-            border-left: 5px solid #4CAF50;
+            border-radius: 12px;
+            margin-bottom: 20px;
         }
-
-        .urgency-box {
-            padding: 10px;
-            border-radius: 5px;
-            margin: 10px 0;
+        
+        .condition.urgent {
+            border-left-color: var(--warning);
+            background: rgba(245, 158, 11, 0.08);
+        }
+        
+        .condition.emergency {
+            border-left-color: var(--danger);
+            background: rgba(239, 68, 68, 0.08);
+        }
+        
+        .condition-title {
             font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-
-        .urgency-high {
-            background: #ffebee;
-            color: #c62828;
-            border: 1px solid #ffcdd2;
-        }
-
-        .urgency-medium {
-            background: #fff3e0;
-            color: #ef6c00;
-            border: 1px solid #ffcc02;
-        }
-
-        .urgency-low {
-            background: #e8f5e8;
-            color: #2e7d32;
-            border: 1px solid #c8e6c9;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 20px;
-            color: #666;
-        }
-
-        .disclaimer {
-            background: #fff3cd;
-            border: 1px solid #ffeaa7;
-            color: #856404;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-            font-weight: 500;
-        }
-
-        .error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
-            padding: 15px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        .emergency-alert {
-            background: #dc3545;
+        
+        .urgency-badge {
+            background: var(--accent);
             color: white;
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-weight: bold;
-            text-align: center;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+        }
+        
+        .condition.urgent .urgency-badge { background: var(--warning); }
+        .condition.emergency .urgency-badge { background: var(--danger); }
+        
+        @media (max-width: 1024px) {
+            .main-grid { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Medical AI Assistant</h1>
-            <p>Describe your symptoms and get AI-powered insights</p>
+            <h1><i class="fas fa-stethoscope"></i> AI Medical Assistant</h1>
+            <p>Professional medical intelligence for comprehensive health analysis</p>
         </div>
 
-        <div class="main-content">
-            <div class="input-section">
-                <label for="symptoms">What symptoms are you experiencing?</label>
-                <textarea 
-                    id="symptoms" 
-                    placeholder="Example: I have a headache, fever, and sore throat that started 2 days ago..."
-                ></textarea>
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-clipboard-list"></i> Symptom Analysis</h2>
+                </div>
+                <div class="card-body">
+                    <textarea 
+                        id="symptoms" 
+                        class="symptoms-textarea"
+                        placeholder="Describe your symptoms in detail:
+
+• When did they start?
+• How severe are they (1-10)?
+• What makes them better/worse?
+
+Examples:
+- 'I was skating and slipped on ice, my knee is swollen and I can't bend it'
+- 'Fell off my bike and my wrist really hurts'
+- 'Persistent cough for 3 days, worse at night'"
+                    ></textarea>
+                    <button class="analyze-btn" onclick="performAnalysis()">
+                        <i class="fas fa-brain"></i> Get Medical Analysis
+                    </button>
+                </div>
             </div>
 
-            <button id="analyzeBtn" class="analyze-btn" onclick="analyzeSymptoms()">
-                Analyze Symptoms
-            </button>
-
-            <div id="results" style="display: none;"></div>
-
-            <div class="disclaimer">
-                <strong>Important Disclaimer:</strong> This AI assistant provides general information only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-file-medical-alt"></i> Medical Analysis</h2>
+                </div>
+                <div class="card-body">
+                    <div id="analysisResult">
+                        <p style="text-align: center; color: #64748b; padding: 40px;">
+                            Enter your symptoms to get started
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        async function analyzeSymptoms() {
+        async function performAnalysis() {
             const symptoms = document.getElementById('symptoms').value.trim();
-            const resultsDiv = document.getElementById('results');
-            const analyzeBtn = document.getElementById('analyzeBtn');
-
+            const analysisResult = document.getElementById('analysisResult');
+            
             if (!symptoms) {
-                alert('Please describe your symptoms first!');
+                analysisResult.innerHTML = '<p style="color: #ef4444;">Please describe your symptoms.</p>';
                 return;
             }
-
-            // Show loading state
-            analyzeBtn.disabled = true;
-            analyzeBtn.textContent = 'Analyzing...';
-            resultsDiv.style.display = 'block';
-            resultsDiv.innerHTML = '<div class="loading">AI is analyzing your symptoms...</div>';
-
+            
+            analysisResult.innerHTML = '<p style="text-align: center;">Analyzing symptoms...</p>';
+            
             try {
-                // Send symptoms to your Python backend
-                const response = await fetch('https://medical-ai-production.onrender.com/analyze-symptoms', {
+                const response = await fetch('/analyze', {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ symptoms: symptoms })
                 });
-
+                
                 const data = await response.json();
-
-                if (response.ok) {
-                    // Determine urgency class for styling
-                    let urgencyClass = 'urgency-low';
-                    if (data.urgencyLevel.includes('High')) {
-                        urgencyClass = 'urgency-high';
-                    } else if (data.urgencyLevel.includes('Medium')) {
-                        urgencyClass = 'urgency-medium';
+                
+                if (response.ok && data.conditions) {
+                    let html = '';
+                    data.conditions.forEach((condition, index) => {
+                        const urgencyClass = condition.urgency || 'routine';
+                        html += `
+                            <div class="condition ${urgencyClass}">
+                                <div class="condition-title">
+                                    ${index + 1}. ${condition.name}
+                                    <span class="urgency-badge">${urgencyClass}</span>
+                                </div>
+                                <p style="margin-bottom: 12px;">${condition.why}</p>
+                                <div>
+                                    <strong>Actions:</strong>
+                                    <ul style="margin-left: 20px; margin-top: 8px;">
+                                        ${condition.actions.map(action => `<li>${action}</li>`).join('')}
+                                    </ul>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    if (data.red_flags && data.red_flags.length > 0) {
+                        html += `
+                            <div class="condition emergency">
+                                <div class="condition-title">
+                                    ⚠️ Warning Signs - Seek Emergency Care If:
+                                </div>
+                                <ul style="margin-left: 20px;">
+                                    ${data.red_flags.map(flag => `<li>${flag}</li>`).join('')}
+                                </ul>
+                            </div>
+                        `;
                     }
-
-                    // Show emergency alert if needed
-                    let emergencyAlert = '';
-                    if (data.emergencyNote) {
-                        emergencyAlert = `<div class="emergency-alert">${data.emergencyNote}</div>`;
-                    }
-
-                    // Show the AI's analysis
-                    resultsDiv.innerHTML = `
-                        ${emergencyAlert}
-                        <div class="results">
-                            <h3>AI Analysis Results</h3>
-                            <div class="urgency-box ${urgencyClass}">
-                                <strong>Urgency Level:</strong> ${data.urgencyLevel}
-                            </div>
-                            <div style="margin: 15px 0; line-height: 1.6; white-space: pre-line;">
-                                ${data.analysis}
-                            </div>
-                            <div class="disclaimer">
-                                <strong>${data.disclaimer}</strong>
-                            </div>
-                            <small style="color: #666; display: block; margin-top: 10px;">
-                                Analysis completed at: ${new Date(data.timestamp).toLocaleString()}
-                            </small>
-                        </div>
-                    `;
+                    
+                    analysisResult.innerHTML = html;
                 } else {
-                    // Show error if something went wrong
-                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                    analysisResult.innerHTML = '<p style="color: #ef4444;">Analysis failed. Please try again.</p>';
                 }
             } catch (error) {
-                console.error('Error:', error);
-                resultsDiv.innerHTML = `
-                    <div class="error">
-                        Failed to connect to AI service. Make sure your Python server is running!<br>
-                        <small>Error details: ${error.message}</small>
-                    </div>
-                `;
+                analysisResult.innerHTML = '<p style="color: #ef4444;">Connection error. Please try again.</p>';
             }
-
-            // Reset button
-            analyzeBtn.disabled = false;
-            analyzeBtn.textContent = 'Analyze Symptoms';
         }
-
-        // Allow Ctrl+Enter to submit
-        document.getElementById('symptoms').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter' && e.ctrlKey) {
-                analyzeSymptoms();
-            }
-        });
     </script>
 </body>
 </html>

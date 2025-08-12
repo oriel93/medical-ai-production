@@ -522,6 +522,11 @@ def analyze():
             'ai_model_used': 'emergency-medical-protocol',
             'timestamp': datetime.now().isoformat()
         }), 200
+    from flask import send_from_directory
+
+    @app.route('/app', methods=['GET'])
+    def serve_ui():
+        return send_from_directory('.', 'index.html')
 
 
 if __name__ == '__main__':
