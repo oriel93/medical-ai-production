@@ -216,7 +216,7 @@
 
             try {
                 // Send symptoms to your Python backend
-                const response = await fetch('https://medical-ai-production.onrender.com/analyze-symptoms', {
+                const response = await fetch('http://localhost:5000/analyze-symptoms', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

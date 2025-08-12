@@ -233,3 +233,4 @@ if __name__ == '__main__':
     print('Ready for production deployment!')
 
     app.run(host='0.0.0.0', port=port, debug=False)
+@app.route(`'/`', methods=[`'GET`'])`nef home():`n    `'`'`'Simple home page to confirm server is running`'`'`'`n    return jsonify({`n        `'message`': `'Welcome to Medical AI Assistant Backend!`',`n        `'status`': `'online`',`n        `'endpoints`': {`n            `'/health`': `'Check API status`',`n            `'/test`': `'Test basic connectivity`',`n            `'/analyze-symptoms`': `'POST for symptom analysis`'`n        },`n        `'version`': `'2.0.0`',`n        `'timestamp`': datetime.now().isoformat()`n    })`n
