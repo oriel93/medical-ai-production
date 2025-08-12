@@ -1,0 +1,578 @@
+Copy<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Medical Assistant - Professional Diagnosis Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        :root {
+            --primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --primary-solid: #667eea;
+            --secondary: #f8fafc;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --text-primary: #1e293b;
+            --text-secondary: #64748b;
+            --border: #e2e8f0;
+            --card-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            --glass: rgba(255, 255, 255, 0.95);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0f4ff 100%);
+            color: var(--text-primary);
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 0 40px;
+        }
+
+        .header h1 {
+            font-size: 3.5rem;
+            font-weight: 700;
+            background: var(--primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 16px;
+            text-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .header .subtitle {
+            font-size: 1.3rem;
+            color: var(--text-secondary);
+            font-weight: 300;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15);
+        }
+
+        .card-header {
+            background: var(--primary);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .card-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .card-header p {
+            opacity: 0.9;
+            font-size: 1rem;
+        }
+
+        .card-body {
+            padding: 40px;
+        }
+
+        .input-group {
+            margin-bottom: 30px;
+        }
+
+        .input-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 12px;
+            font-size: 1.1rem;
+        }
+
+        .symptoms-textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 20px;
+            border: 2px solid var(--border);
+            border-radius: 16px;
+            font-size: 16px;
+            font-family: inherit;
+            resize: vertical;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.8);
+        }
+
+        .symptoms-textarea:focus {
+            outline: none;
+            border-color: var(--primary-solid);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+            background: white;
+        }
+
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: rgba(248, 250, 252, 0.5);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover, .upload-zone.dragover {
+            border-color: var(--primary-solid);
+            background: rgba(102, 126, 234, 0.05);
+            transform: scale(1.02);
+        }
+
+        .upload-icon {
+            font-size: 3.5rem;
+            color: var(--primary-solid);
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+
+        .upload-zone:hover .upload-icon {
+            transform: scale(1.1);
+        }
+
+        .upload-text {
+            font-size: 1.2rem;
+            color: var(--text-primary);
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .upload-subtext {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .image-preview-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 16px;
+            margin-top: 20px;
+        }
+
+        .image-preview {
+            position: relative;
+            border-radius: 12px;
+            overflow: hidden;
+            aspect-ratio: 1;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .image-preview:hover {
+            transform: scale(1.05);
+        }
+
+        .image-preview img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .remove-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 28px;
+            height: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            transition: transform 0.2s ease;
+        }
+
+        .remove-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .analyze-btn {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 20px 32px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .analyze-btn:hover:not(:disabled) {
+            transform: translateY(-3px);
+            box-shadow: 0 12px 35px rgba(102, 126, 234, 0.4);
+        }
+
+        .analyze-btn:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: white;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .result-card {
+            grid-column: 1 / -1;
+            display: none;
+        }
+
+        .result-content {
+            padding: 40px;
+        }
+
+        .analysis-section {
+            background: rgba(16, 185, 129, 0.05);
+            border-left: 4px solid var(--accent);
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+        }
+
+        .analysis-title {
+            color: var(--accent);
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .analysis-text {
+            line-height: 1.8;
+            font-size: 1.05rem;
+            color: var(--text-primary);
+        }
+
+        .disclaimer {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border: 1px solid #f59e0b;
+            border-radius: 16px;
+            padding: 25px;
+            margin: 25px 0;
+        }
+
+        .disclaimer-title {
+            font-weight: 600;
+            color: #92400e;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 1.1rem;
+        }
+
+        .disclaimer-text {
+            color: #92400e;
+            line-height: 1.7;
+        }
+
+        .error {
+            background: #fef2f2;
+            border: 1px solid var(--danger);
+            color: #991b1b;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        @media (max-width: 768px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2.5rem;
+            }
+            
+            .card-body {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1><i class="fas fa-user-md"></i> AI Medical Assistant</h1>
+            <p class="subtitle">Harvard-level medical intelligence powered by advanced AI technology</p>
+        </div>
+
+        <div class="main-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2><i class="fas fa-stethoscope"></i> Symptom Analysis</h2>
+                    <p>Describe your symptoms for comprehensive medical guidance</p>
+                </div>
+                
+                <div class="card-body">
+                    <div class="input-group">
+                        <label class="input-label" for="symptoms">
+                            <i class="fas fa-clipboard-list"></i> Detailed Symptom Description
+                        </label>
+                        <textarea 
+                            id="symptoms" 
+                            class="symptoms-textarea"
+                            placeholder="Please provide comprehensive details about your symptoms:
+
+• When did they start? (onset and duration)
+• Severity level (1-10 scale)
+• Location and character of symptoms
+• Aggravating or relieving factors
+• Associated symptoms
+• Your medical history and current medications
+• Any recent changes or triggers
+
+Example: 'Started 3 days ago with persistent dry cough (7/10 severity), worse at night and when lying down. Accompanied by mild chest tightness and occasional shortness of breath during physical activity. No fever, but experiencing fatigue. Currently taking lisinopril for hypertension. No recent travel or known exposures.'"
+                        ></textarea>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label">
+                            <i class="fas fa-camera-retro"></i> Medical Images (Optional)
+                        </label>
+                        <div class="upload-zone" id="uploadZone">
+                            <div class="upload-icon">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                            </div>
+                            <div class="upload-text">Drag & drop medical images here</div>
+                            <div class="upload-subtext">or click to browse • JPG, PNG, HEIC • Max 10MB each</div>
+                            <input type="file" id="fileInput" class="file-input" multiple accept="image/*">
+                        </div>
+                        <div class="image-preview-grid" id="imageGrid"></div>
+                    </div>
+
+                    <button class="analyze-btn" id="analyzeBtn" onclick="performAnalysis()">
+                        <i class="fas fa-brain"></i>
+                        Get Professional Medical Analysis
+                    </button>
+                </div>
+            </div>
+
+            <div class="card result-card" id="resultCard">
+                <div class="card-header">
+                    <h2><i class="fas fa-file-medical-alt"></i> Medical Analysis Report</h2>
+                    <p>Professional assessment based on your symptoms and images</p>
+                </div>
+                
+                <div class="result-content">
+                    <div id="analysisResult"></div>
+                    
+                    <div class="disclaimer">
+                        <div class="disclaimer-title">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            Important Medical Disclaimer
+                        </div>
+                        <div class="disclaimer-text">
+                            This AI analysis provides general health information for educational purposes only. It is NOT a substitute for professional medical advice, diagnosis, or treatment. Always consult qualified healthcare professionals for proper medical care. In medical emergencies, contact your local emergency services immediately (911 in the US).
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'https://medical-ai-production.onrender.com';
+        let uploadedFiles = [];
+
+        // File upload handling
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const imageGrid = document.getElementById('imageGrid');
+
+        uploadZone.addEventListener('click', () => fileInput.click());
+        uploadZone.addEventListener('dragover', handleDragOver);
+        uploadZone.addEventListener('dragleave', handleDragLeave);
+        uploadZone.addEventListener('drop', handleDrop);
+        fileInput.addEventListener('change', handleFileSelect);
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            uploadZone.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            uploadZone.classList.remove('dragover');
+            handleFiles(e.dataTransfer.files);
+        }
+
+        function handleFileSelect(e) {
+            handleFiles(e.target.files);
+        }
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                if (file.type.startsWith('image/') && file.size <= 10 * 1024 * 1024) {
+                    uploadedFiles.push(file);
+                    createImagePreview(file);
+                }
+            });
+        }
+
+        function createImagePreview(file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const preview = document.createElement('div');
+                preview.className = 'image-preview';
+                preview.innerHTML = `
+                    <img src="${e.target.result}" alt="Medical image">
+                    <button class="remove-btn" onclick="removeImage(this, '${file.name}')">
+                        <i class="fas fa-times"></i>
+                    </button>
+                `;
+                imageGrid.appendChild(preview);
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function removeImage(button, filename) {
+            button.parentElement.remove();
+            uploadedFiles = uploadedFiles.filter(file => file.name !== filename);
+        }
+
+        async function performAnalysis() {
+            const symptoms = document.getElementById('symptoms').value.trim();
+            const resultCard = document.getElementById('resultCard');
+            const analysisResult = document.getElementById('analysisResult');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            if (!symptoms && uploadedFiles.length === 0) {
+                analysisResult.innerHTML = '<div class="error"><i class="fas fa-exclamation-circle"></i> Please provide symptoms or upload images for analysis.</div>';
+                resultCard.style.display = 'block';
+                return;
+            }
+            
+            // Update button state
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = '<div class="spinner"></div> Analyzing with AI...';
+            
+            // Show loading state
+            resultCard.style.display = 'block';
+            analysisResult.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><i class="fas fa-brain fa-2x" style="margin-bottom: 16px; color: var(--primary-solid);"></i><br>Advanced medical AI is analyzing your case...</div>';
+            
+            try {
+                const formData = new FormData();
+                formData.append('symptoms', symptoms);
+                uploadedFiles.forEach(file => {
+                    formData.append('images', file);
+                });
+                
+                const response = await fetch(`${API_BASE}/analyze-comprehensive`, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    analysisResult.innerHTML = `
+                        <div class="analysis-section">
+                            <div class="analysis-title">
+                                <i class="fas fa-user-md"></i>
+                                Professional Medical Assessment
+                            </div>
+                            <div class="analysis-text">${data.analysis}</div>
+                        </div>
+                        ${uploadedFiles.length > 0 ? `
+                        <div class="analysis-section" style="background: rgba(59, 130, 246, 0.05); border-left-color: #3b82f6;">
+                            <div class="analysis-title" style="color: #3b82f6;">
+                                <i class="fas fa-image"></i>
+                                Medical Image Analysis
+                            </div>
+                            <div class="analysis-text">Analyzed ${uploadedFiles.length} medical image(s) in conjunction with reported symptoms. ${data.image_analysis || 'Visual findings have been incorporated into the overall assessment.'}</div>
+                        </div>
+                        ` : ''}
+                    `;
+                } else {
+                    analysisResult.innerHTML = `<div class="error"><i class="fas fa-exclamation-triangle"></i> ${data.message || 'Analysis failed. Please try again or consult a healthcare professional.'}</div>`;
+                }
+                
+            } catch (error) {
+                analysisResult.innerHTML = '<div class="error"><i class="fas fa-wifi"></i> Connection error. Please check your internet connection and try again.</div>';
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = '<i class="fas fa-brain"></i> Get Professional Medical Analysis';
+            }
+        }
+
+        // Keyboard shortcut
+        document.getElementById('symptoms').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                performAnalysis();
+            }
+        });
+    </script>
+</body>
+</html>
