@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical AI Assistant</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            padding: 40px;
+        }
+
+        .input-section {
+            margin-bottom: 30px;
+        }
+
+        label {
+            display: block;
+            font-size: 1.2em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #ddd;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+            font-family: inherit;
+        }
+
+        textarea:focus {
+            outline: none;
+            border-color: #4CAF50;
+            box-shadow: 0 0 10px rgba(76, 175, 80, 0.2);
+        }
+
+        .analyze-btn {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .analyze-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(76, 175, 80, 0.3);
+        }
+
+        .analyze-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            border-left: 5px solid #4CAF50;
+        }
+
+        .urgency-box {
+            padding: 10px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-weight: 600;
+        }
+
+        .urgency-high {
+            background: #ffebee;
+            color: #c62828;
+            border: 1px solid #ffcdd2;
+        }
+
+        .urgency-medium {
+            background: #fff3e0;
+            color: #ef6c00;
+            border: 1px solid #ffcc02;
+        }
+
+        .urgency-low {
+            background: #e8f5e8;
+            color: #2e7d32;
+            border: 1px solid #c8e6c9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .disclaimer {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+            font-weight: 500;
+        }
+
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+
+        .emergency-alert {
+            background: #dc3545;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Medical AI Assistant</h1>
+            <p>Describe your symptoms and get AI-powered insights</p>
+        </div>
+
+        <div class="main-content">
+            <div class="input-section">
+                <label for="symptoms">What symptoms are you experiencing?</label>
+                <textarea 
+                    id="symptoms" 
+                    placeholder="Example: I have a headache, fever, and sore throat that started 2 days ago..."
+                ></textarea>
+            </div>
+
+            <button id="analyzeBtn" class="analyze-btn" onclick="analyzeSymptoms()">
+                Analyze Symptoms
+            </button>
+
+            <div id="results" style="display: none;"></div>
+
+            <div class="disclaimer">
+                <strong>Important Disclaimer:</strong> This AI assistant provides general information only and is not a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function analyzeSymptoms() {
+            const symptoms = document.getElementById('symptoms').value.trim();
+            const resultsDiv = document.getElementById('results');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+
+            if (!symptoms) {
+                alert('Please describe your symptoms first!');
+                return;
+            }
+
+            // Show loading state
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = 'Analyzing...';
+            resultsDiv.style.display = 'block';
+            resultsDiv.innerHTML = '<div class="loading">AI is analyzing your symptoms...</div>';
+
+            try {
+                // Send symptoms to your Python backend
+                const response = await fetch('http://localhost:5000/analyze-symptoms', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ symptoms: symptoms })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Determine urgency class for styling
+                    let urgencyClass = 'urgency-low';
+                    if (data.urgencyLevel.includes('High')) {
+                        urgencyClass = 'urgency-high';
+                    } else if (data.urgencyLevel.includes('Medium')) {
+                        urgencyClass = 'urgency-medium';
+                    }
+
+                    // Show emergency alert if needed
+                    let emergencyAlert = '';
+                    if (data.emergencyNote) {
+                        emergencyAlert = `<div class="emergency-alert">${data.emergencyNote}</div>`;
+                    }
+
+                    // Show the AI's analysis
+                    resultsDiv.innerHTML = `
+                        ${emergencyAlert}
+                        <div class="results">
+                            <h3>AI Analysis Results</h3>
+                            <div class="urgency-box ${urgencyClass}">
+                                <strong>Urgency Level:</strong> ${data.urgencyLevel}
+                            </div>
+                            <div style="margin: 15px 0; line-height: 1.6; white-space: pre-line;">
+                                ${data.analysis}
+                            </div>
+                            <div class="disclaimer">
+                                <strong>${data.disclaimer}</strong>
+                            </div>
+                            <small style="color: #666; display: block; margin-top: 10px;">
+                                Analysis completed at: ${new Date(data.timestamp).toLocaleString()}
+                            </small>
+                        </div>
+                    `;
+                } else {
+                    // Show error if something went wrong
+                    resultsDiv.innerHTML = `<div class="error">Error: ${data.error}</div>`;
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="error">
+                        Failed to connect to AI service. Make sure your Python server is running!<br>
+                        <small>Error details: ${error.message}</small>
+                    </div>
+                `;
+            }
+
+            // Reset button
+            analyzeBtn.disabled = false;
+            analyzeBtn.textContent = 'Analyze Symptoms';
+        }
+
+        // Allow Ctrl+Enter to submit
+        document.getElementById('symptoms').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter' && e.ctrlKey) {
+                analyzeSymptoms();
+            }
+        });
+    </script>
+</body>
+</html>
