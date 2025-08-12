@@ -20,7 +20,7 @@ HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
 # Headers for API requests
 headers = {}
 if HF_API_TOKEN:
-    headers["Authorization"] = f"Bearer {HF_API_TOKEN"
+    headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
 
 
 def determine_urgency_level(symptoms):
