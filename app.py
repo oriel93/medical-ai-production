@@ -1,236 +1,199 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
+import logging
 import os
 from datetime import datetime
-from dotenv import load_dotenv
 
-# Load environment variables
-load_dotenv()
-
-# Create Flask app
+# Initialize Flask app
 app = Flask(__name__)
 CORS(app)
 
-# Configuration
-HF_API_TOKEN = os.getenv('HF_API_TOKEN')
-HF_MODEL = os.getenv('HF_MODEL', 'microsoft/BioGPT-Large')
-HF_API_URL = f"https://api-inference.huggingface.co/models/{HF_MODEL}"
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-# Headers for API requests
-headers = {}
-if HF_API_TOKEN:
-    headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
+# Configuration - set these in Render environment variables
+HF_API_TOKEN = os.getenv("HF_API_TOKEN")
+HF_MODEL_URL = os.getenv("HF_API_URL", "https://api-inference.huggingface.co/models/microsoft/DialoGPT-medium")
 
 
-def determine_urgency_level(symptoms):
-    """Determine urgency level based on symptom keywords"""
-    symptoms_lower = symptoms.lower()
+def query_huggingface_api(payload):
+    """Query Hugging Face API with proper error handling"""
+    headers = {"Content-Type": "application/json"}
 
-    # High urgency indicators
-    high_urgency_keywords = [
-        'chest pain', 'difficulty breathing', 'severe bleeding',
-        'unconscious', 'stroke', 'heart attack', 'severe headache',
-        'cannot breathe', 'severe burn', 'poisoning'
-    ]
+    # Fixed f-string syntax - this was the original error
+    if HF_API_TOKEN:
+        headers["Authorization"] = f"Bearer {HF_API_TOKEN}"
 
-    # Medium urgency indicators
-    medium_urgency_keywords = [
-        'fever over 101', 'persistent vomiting', 'severe pain',
-        'high fever', 'dehydration', 'severe cough', 'blood in stool'
-    ]
+    try:
+        response = requests.post(HF_MODEL_URL, headers=headers, json=payload, timeout=30)
 
-    # Check for high urgency
-    for keyword in high_urgency_keywords:
-        if keyword in symptoms_lower:
-            return 'High - Seek immediate medical attention!'
+        if response.status_code == 200:
+            return response.json(), 200
+        elif response.status_code == 503:
+            logger.warning("Model is loading, please wait...")
+            return {"error": "Model is warming up, try again in a moment"}, 503
+        else:
+            logger.warning(f"AI API failed: status {response.status_code}")
+            return {"error": f"API error: {response.status_code}"}, response.status_code
 
-    # Check for medium urgency
-    for keyword in medium_urgency_keywords:
-        if keyword in symptoms_lower:
-            return 'Medium - Consider seeing a doctor soon'
-
-    return 'Low - Monitor symptoms and consider self-care'
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Request failed: {str(e)}")
+        return {"error": "Failed to connect to AI service"}, 500
 
 
-def get_enhanced_fallback_analysis(symptoms):
-    """Provide condition-specific advice when AI is unavailable"""
-    symptoms_lower = symptoms.lower()
+def analyze_symptoms_with_ai(symptoms_text):
+    """Analyze symptoms using AI with medical-focused prompting"""
+    if not symptoms_text.strip():
+        return "Please provide symptoms to analyze."
 
-    # Nosebleed specific advice
-    if 'nosebleed' in symptoms_lower or 'nose bleed' in symptoms_lower:
-        return """For nosebleeds:
-1. Sit upright and lean slightly forward
-2. Pinch the soft part of your nose firmly for 10-15 minutes
-3. Apply ice to the bridge of your nose
-4. Breathe through your mouth and avoid swallowing blood
-5. After bleeding stops, avoid blowing your nose for several hours
+    # Medical-focused prompt
+    prompt = (
+        f"As a medical AI assistant, analyze these symptoms and provide general health guidance. "
+        f"Include possible conditions (not diagnoses), severity assessment, and when to seek care. "
+        f"Always emphasize consulting healthcare professionals. Symptoms: {symptoms_text}"
+    )
 
-Seek immediate medical care if:
-- Bleeding continues after 20 minutes of direct pressure
-- You feel dizzy, weak, or faint
-- The nosebleed follows a head injury
-- You have frequent nosebleeds (more than once per week)"""
+    payload = {
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 300,
+            "temperature": 0.7,
+            "do_sample": True,
+            "return_full_text": False
+        },
+        "options": {
+            "wait_for_model": True
+        }
+    }
 
-    # Headache specific advice
-    elif 'headache' in symptoms_lower:
-        return """For headaches:
-1. Rest in a quiet, dark room
-2. Apply cold compress to forehead or warm compress to neck
-3. Stay hydrated with water
-4. Practice gentle neck stretches
-5. Consider over-the-counter pain relievers as directed
+    result, status_code = query_huggingface_api(payload)
 
-Seek medical care if:
-- Sudden, severe headache unlike any you've had before
-- Headache with fever, stiff neck, confusion, or vision changes
-- Headache after a head injury
-- Headaches that worsen progressively over days or weeks"""
+    if status_code == 200 and isinstance(result, list) and len(result) > 0:
+        generated_text = result[0].get("generated_text", "").strip()
+        if generated_text:
+            return generated_text
 
-    # Default comprehensive advice
-    return """Based on your symptoms, here are general recommendations:
-
-Immediate Steps:
-1. Monitor your symptoms closely and note any changes
-2. Stay well-hydrated with water or clear fluids
-3. Get adequate rest in a comfortable environment
-4. Take your temperature if you feel unwell
-
-Self-Care Measures:
-- Maintain good nutrition with light, easily digestible foods
-- Avoid alcohol, smoking, and excessive caffeine
-- Practice stress-reduction techniques if applicable
-
-When to Seek Medical Care:
-- Symptoms worsen significantly or don't improve within 24-48 hours
-- You develop new concerning symptoms
-- You feel severely unwell or have difficulty with daily activities
-- You have any doubts about your condition
-
-For serious symptoms like severe pain, difficulty breathing, chest pain, or signs of emergency, seek immediate medical attention."""
+    # Fallback response
+    return ("I'm unable to analyze your symptoms right now. Please consult with a healthcare "
+            "professional for proper medical evaluation and advice.")
 
 
+# Routes
 @app.route('/', methods=['GET'])
 def home():
-    """Root endpoint to prevent 404 errors"""
+    """Home endpoint with service information"""
     return jsonify({
-        "message": "Medical AI Assistant Backend is Running",
-        "status": "healthy",
-        "endpoints": {
-            "health_check": "/health",
-            "test": "/test",
-            "analyze_symptoms": "POST /analyze-symptoms"
+        'message': 'Welcome to Medical AI Assistant Backend!',
+        'status': 'online',
+        'endpoints': {
+            '/health': 'Check API status',
+            '/test': 'Test basic connectivity',
+            '/analyze-symptoms': 'POST for symptom analysis'
         },
-        "version": "2.0.0"
+        'version': '2.0.0',
+        'timestamp': datetime.now().isoformat()
     })
-
-
-@app.route('/analyze-symptoms', methods=['POST'])
-def analyze_symptoms():
-    try:
-        # Get request data
-        data = request.get_json()
-        if not data or 'symptoms' not in data:
-            return jsonify({'error': 'Please provide symptoms to analyze'}), 400
-
-        symptoms = data['symptoms'].strip()
-        if not symptoms or len(symptoms) < 5:
-            return jsonify({'error': 'Please provide more detailed symptoms'}), 400
-
-        # Determine urgency level
-        urgency_level = determine_urgency_level(symptoms)
-
-        # Enhanced medical prompt for better AI responses
-        medical_prompt = f"""As a medical information assistant, analyze these symptoms: "{symptoms}"
-
-Provide a professional assessment including:
-1. Most likely condition(s) based on the symptoms described
-2. Specific self-care recommendations that are safe and appropriate
-3. Clear guidance on when professional medical care should be sought
-4. Any immediate safety considerations
-
-Keep the response under 250 words, be cautious and professional, and emphasize this is not medical advice."""
-
-        # Try to get AI analysis
-        try:
-            payload = {
-                "inputs": medical_prompt,
-                "parameters": {
-                    "max_new_tokens": 300,
-                    "temperature": 0.4,
-                    "do_sample": True,
-                    "return_full_text": False
-                },
-                "options": {
-                    "wait_for_model": True,
-                    "use_cache": True
-                }
-            }
-
-            response = requests.post(HF_API_URL, headers=headers, json=payload, timeout=45)
-
-            if response.status_code == 200:
-                ai_response = response.json()
-                if isinstance(ai_response, list) and len(ai_response) > 0:
-                    analysis_text = ai_response[0].get('generated_text', '').strip()
-                else:
-                    analysis_text = ai_response.get('generated_text', '').strip()
-
-                if not analysis_text:
-                    raise Exception("Empty response from AI")
-
-            else:
-                raise Exception(f"API returned status {response.status_code}")
-
-        except Exception as e:
-            print(f'AI API failed: {e}')
-            analysis_text = get_enhanced_fallback_analysis(symptoms)
-
-        # Prepare response
-        response_data = {
-            'symptoms': symptoms,
-            'analysis': analysis_text,
-            'urgency_level': urgency_level,
-            'disclaimer': 'This is NOT medical advice. Always consult a qualified healthcare professional for medical concerns.',
-            'timestamp': datetime.now().isoformat(),
-            'emergency_note': 'If this is a life-threatening emergency, call 911 immediately!' if urgency_level.startswith(
-                'High') else None
-        }
-
-        return jsonify(response_data)
-
-    except Exception as e:
-        print(f'Error in analyze_symptoms: {e}')
-        return jsonify({
-            'error': 'Sorry, the analysis failed. Please try again.',
-            'details': str(e) if app.debug else None
-        }), 500
 
 
 @app.route('/health', methods=['GET'])
 def health_check():
+    """Health check endpoint"""
     return jsonify({
         'status': 'healthy',
-        'version': '2.0.0',
-        'ai_configured': bool(HF_API_TOKEN),
-        'timestamp': datetime.now().isoformat()
-    })
+        'timestamp': datetime.now().isoformat(),
+        'service': 'Medical AI Assistant',
+        'ai_configured': bool(HF_API_TOKEN)
+    }), 200
 
 
 @app.route('/test', methods=['GET'])
 def test_endpoint():
-    """Test endpoint to verify server is working"""
+    """Test endpoint for connectivity"""
     return jsonify({
-        'message': 'Your Medical AI server is working perfectly!',
-        'status': 'success',
-        'timestamp': datetime.now().isoformat()
-    })
+        'message': 'API is working correctly',
+        'timestamp': datetime.now().isoformat(),
+        'test': 'passed'
+    }), 200
+
+
+@app.route('/analyze-symptoms', methods=['POST'])
+def analyze_symptoms():
+    """Main symptom analysis endpoint"""
+    try:
+        # Validate JSON request
+        if not request.is_json:
+            return jsonify({
+                'error': 'Content-Type must be application/json',
+                'message': 'Please send symptoms in JSON format'
+            }), 400
+
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'error': 'No JSON data provided',
+                'message': 'Request body cannot be empty'
+            }), 400
+
+        # Extract symptoms from request
+        symptoms = data.get('symptoms', '').strip()
+        if not symptoms:
+            return jsonify({
+                'error': 'No symptoms provided',
+                'message': 'Please provide symptoms to analyze'
+            }), 400
+
+        logger.info(f"Analyzing symptoms: {symptoms[:100]}...")
+
+        # Get AI analysis
+        analysis = analyze_symptoms_with_ai(symptoms)
+
+        # Return response
+        response_data = {
+            'analysis': analysis,
+            'disclaimer': 'This is for informational purposes only. Always consult healthcare professionals for medical advice.',
+            'timestamp': datetime.now().isoformat(),
+            'symptoms_received': symptoms[:100] + ('...' if len(symptoms) > 100 else '')
+        }
+
+        logger.info("Analysis completed successfully")
+        return jsonify(response_data), 200
+
+    except Exception as e:
+        logger.error(f"Error in analyze_symptoms: {str(e)}")
+        return jsonify({
+            'error': 'Internal server error',
+            'message': 'An error occurred while processing your request'
+        }), 500
+
+
+# Error handlers
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        'error': 'Not Found',
+        'message': 'The requested endpoint does not exist',
+        'available_endpoints': ['/', '/health', '/test', '/analyze-symptoms']
+    }), 404
+
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({
+        'error': 'Method Not Allowed',
+        'message': 'The requested method is not allowed for this endpoint'
+    }), 405
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        'error': 'Internal Server Error',
+        'message': 'An internal server error occurred'
+    }), 500
 
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
-    print(f'Medical AI server starting on port {port}')
-    print('Ready for production deployment!')
-
     app.run(host='0.0.0.0', port=port, debug=False)
-@app.route(`'/`', methods=[`'GET`'])`nef home():`n    `'`'`'Simple home page to confirm server is running`'`'`'`n    return jsonify({`n        `'message`': `'Welcome to Medical AI Assistant Backend!`',`n        `'status`': `'online`',`n        `'endpoints`': {`n            `'/health`': `'Check API status`',`n            `'/test`': `'Test basic connectivity`',`n            `'/analyze-symptoms`': `'POST for symptom analysis`'`n        },`n        `'version`': `'2.0.0`',`n        `'timestamp`': datetime.now().isoformat()`n    })`n
